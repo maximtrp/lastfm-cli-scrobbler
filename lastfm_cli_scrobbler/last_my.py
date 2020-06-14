@@ -155,8 +155,12 @@ def main():
 
     if 'scrobbles' in result:
         print('Scrobbling report:')
-        for scrobble in result['scrobbles']['scrobble']:
-            track = tracks_info[scrobble['timestamp']]
+        scrobbles = result['scrobbles']['scrobble']
+        if not isinstance(scrobbles, list):
+            scrobbles = [scrobbles]
+
+        for scrobble in scrobbles:
+            track = tracks_info[str(scrobble['timestamp'])]
             status = '[{}]'.format('✘' if scrobble['ignoredMessage']['code'] == '1' else '✔')
             print('{} {} - {}'.format(status, track['artist'], track['track']))
 
