@@ -42,7 +42,11 @@ def main():
     else:
         creds = {}
 
-    if 'session_key' not in creds and 'api_key' not in creds and 'secret' not in creds:
+    creds_ready = set([
+        'username', 'secret', 'api_key', 'session_key'
+    ]).issubset(creds)
+
+    if not creds_ready:
 
         print('[✘] Auth keys not found')
         while not logged_in:
