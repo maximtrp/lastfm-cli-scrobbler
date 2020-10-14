@@ -8,7 +8,6 @@ from time import time
 from pylast import LastFMNetwork, md5
 from optparse import OptionParser
 from mutagen import File as MutagenFile
-from sys import exit
 
 
 def main():

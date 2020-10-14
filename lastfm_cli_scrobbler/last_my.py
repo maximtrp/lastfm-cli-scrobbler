@@ -21,7 +21,7 @@ def make_string(lst, prefix):
     prefixed_lst_filtered = list(filter(lambda x: x[1], prefixed_lst))
     prefixed_dict = dict(prefixed_lst_filtered)
     return (
-        "".join(map(lambda x: "".join(x), prefixed_lst_filtered)),
+        "".join(map("".join, prefixed_lst_filtered)),
         prefixed_dict
     )
 
@@ -71,7 +71,6 @@ def main():
             if 'error' in response:
                 print('[✘] Error:', response['message'])
                 print('[!] Making another attempt...')
-                continue
             else:
                 logged_in = True
                 session_key = response['session']['key']
