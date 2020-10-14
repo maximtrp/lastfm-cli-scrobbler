@@ -1,5 +1,7 @@
 # Last.fm CLI Scrobbler
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/2ef30d84737c4e509dd16a45e63b8d98)](https://www.codacy.com/gh/maximtrp/lastfm-cli-scrobbler/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=maximtrp/lastfm-cli-scrobbler&amp;utm_campaign=Badge_Grade)
+
 This is a simple Last.fm command-line scrobbler written in Python.
 
 ## Installation
