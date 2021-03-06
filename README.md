@@ -6,14 +6,16 @@ This is a simple Last.fm command-line scrobbler written in Python.
 
 ## Installation
 
+### PyPi
+
 ```bash
-$ pip install git+https://github.com/maximtrp/lastfm-cli-scrobbler.git
+pip install lastfm-cli-scrobbler
 ```
 
-Or you may clone this repo and install it using:
+### GitHub repo
 
 ```bash
-$ pip install .
+pip install git+https://github.com/maximtrp/lastfm-cli-scrobbler.git
 ```
 
 ## Usage 
@@ -33,8 +35,8 @@ Pylast-based version is probably more stable, but my own implementation of Last.
 ```bash
 $ scrobble {01..04}*.flac
 Scrobbling report:
-[✔] Shuttle358 - Ash
-[✔] Shuttle358 - Chessa
-[✔] Shuttle358 - Blast
-[✔] Shuttle358 - Duh
+[v] Shuttle358 - Ash
+[v] Shuttle358 - Chessa
+[v] Shuttle358 - Blast
+[v] Shuttle358 - Duh
 ```
