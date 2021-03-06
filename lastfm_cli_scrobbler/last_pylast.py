@@ -30,7 +30,7 @@ def main():
     ]).issubset(creds)
 
     if not creds_ready:
-        print('[✘] Auth keys not found')
+        print('[x] Auth keys not found')
         print(
             '[!] Please create an API account:',
             'https://www.last.fm/api/account/create'
@@ -55,7 +55,7 @@ def main():
             password_hash=password_hash
         )
     except Exception as e:
-        print('[✘] Auth unsuccessful:', str(e))
+        print('[x] Auth unsuccessful:', str(e))
         exit(1)
 
     creds['api_key'] = api_key
@@ -66,7 +66,7 @@ def main():
     with open(credentials_fn, 'wt') as file:
         yaml_dump(creds, file)
 
-    print('[✔] Auth successful')
+    print('[v] Auth successful')
 
     items = args if args else glob('*')
     files = filter(lambda x: not isdir(x), items)
@@ -85,7 +85,7 @@ def main():
         album = ft.get('album', [None])[0]
 
         if not artist or not title:
-            print('[✘] Skipping file:', file)
+            print('[x] Skipping file:', file)
             continue
 
         duration = int(ft.info.length)
@@ -102,9 +102,9 @@ def main():
 
     try:
         network.scrobble_many(tracks)
-        print('[✔] Scrobbling successful')
+        print('[v] Scrobbling successful')
     except Exception as e:
-        print('[✘] Scrobbling unsuccessful:', str(e))
+        print('[x] Scrobbling unsuccessful:', str(e))
 
 
 if __name__ == '__main__':

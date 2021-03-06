@@ -48,7 +48,7 @@ def main():
 
     if not creds_ready:
 
-        print('[✘] Auth keys not found')
+        print('[x] Auth keys not found')
         while not logged_in:
             username = input('[?] Enter your username: ')
             password = getpass('[?] Enter your password: ')
@@ -69,7 +69,7 @@ def main():
             response = post(session_url, data=params).json()
 
             if 'error' in response:
-                print('[✘] Error:', response['message'])
+                print('[x] Error:', response['message'])
                 print('[!] Making another attempt...')
             else:
                 logged_in = True
@@ -79,7 +79,7 @@ def main():
                 creds['session_key'] = session_key
                 with open(credentials_fn, 'wt') as file:
                     yaml_dump(creds, file)
-                print('[✔] Session key was obtained successfully\n')
+                print('[v] Session key was obtained successfully\n')
 
     items = args if args else glob('*')
     files = filter(lambda x: not isdir(x), items)
@@ -164,7 +164,7 @@ def main():
 
         for scrobble in scrobbles:
             track = tracks_info[str(scrobble['timestamp'])]
-            status = '[{}]'.format('✘' if scrobble['ignoredMessage']['code'] == '1' else '✔')
+            status = '[{}]'.format('x' if scrobble['ignoredMessage']['code'] == '1' else '✔')
             print('{} {} - {}'.format(status, track['artist'], track['track']))
 
     elif 'error' in result:
