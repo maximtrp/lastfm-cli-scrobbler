@@ -1,21 +1,22 @@
 #!/usr/bin/python
+"""Last.fm CLI scrobbler implementation"""
 
-from yaml import safe_load as yaml_load, dump as yaml_dump
-from glob import glob
 from os.path import exists, isdir, expanduser
-from requests import post
+from glob import glob
 from getpass import getpass
 from time import time
 from hashlib import md5
 from optparse import OptionParser
+from yaml import safe_load as yaml_load, dump as yaml_dump
+from requests import post
 from mutagen import File as MutagenFile
 
 
-# Signature strings and url paramaters dicts
 def make_string(lst, prefix):
-    n = len(lst)
+    """Signature strings and url paramaters dicts"""
+    lst_len = len(lst)
     prefixed_lst = sorted(list(zip(
-        ['%s[%d]' % (prefix, i) for i in range(n)],
+        [f'{prefix}[{i}]' for i in range(lst_len)],
         lst
     )))
     prefixed_lst_filtered = list(filter(lambda x: x[1], prefixed_lst))
@@ -27,6 +28,7 @@ def make_string(lst, prefix):
 
 
 def main():
+    """CLI entrypoint function"""
 
     # Parsing command-line arguments
     parser = OptionParser(usage="Usage: %prog [FILES]")
@@ -37,7 +39,7 @@ def main():
     logged_in = False
 
     if exists(credentials_fn):
-        with open(credentials_fn) as file:
+        with open(credentials_fn, encoding='utf8') as file:
             creds = yaml_load(file) or {}
     else:
         creds = {}
@@ -52,13 +54,16 @@ def main():
         while not logged_in:
             username = input('[?] Enter your username: ')
             password = getpass('[?] Enter your password: ')
-            print('[!] Please create an API account: https://www.last.fm/api/account/create')
+            print(
+                '[!] Please create an API account: '
+                'https://www.last.fm/api/account/create')
             api_key = getpass('[?] Enter your API key: ')
             secret = getpass('[?] Enter your API secret: ')
 
             api_sig = md5(bytes(
-                'api_key{}methodauth.getmobilesessionpassword{}username{}{}'
-                .format(api_key, password, username, secret), encoding='utf8')
+                f'api_key{api_key}'
+                f'methodauth.getmobilesessionpassword{password}'
+                f'username{username}{secret}', encoding='utf8')
             ).hexdigest()
             session_url = 'https://ws.audioscrobbler.com/2.0/'
             params = {
@@ -66,7 +71,7 @@ def main():
                 'api_key': api_key, 'api_sig': api_sig, 'password': password,
                 'username': username
             }
-            response = post(session_url, data=params).json()
+            response = post(session_url, data=params, timeout=30).json()
 
             if 'error' in response:
                 print('[x] Error:', response['message'])
@@ -77,7 +82,7 @@ def main():
                 creds['api_key'] = api_key
                 creds['secret'] = secret
                 creds['session_key'] = session_key
-                with open(credentials_fn, 'wt') as file:
+                with open(credentials_fn, 'wt', encoding='utf8') as file:
                     yaml_dump(creds, file)
                 print('[v] Session key was obtained successfully\n')
 
@@ -88,15 +93,15 @@ def main():
     timestamp_now = int(time())
 
     for file in files:
-        ft = MutagenFile(file, easy=True)
-        if not ft:
+        filetype = MutagenFile(file, easy=True)
+        if not filetype:
             continue
 
-        artist, albumartist, track, album = ft.get('artist', [None])[0],\
-            ft.get('albumartist', [None])[0],\
-            ft.get('title', [None])[0],\
-            ft.get('album', [None])[0]
-        length = int(ft.info.length)
+        artist, albumartist, track, album = filetype.get('artist', [None])[0],\
+            filetype.get('albumartist', [None])[0],\
+            filetype.get('title', [None])[0],\
+            filetype.get('album', [None])[0]
+        length = int(filetype.info.length)
         cum_length += length
         timestamp = str(timestamp_now - cum_length)
         tracks_info.update({
@@ -134,12 +139,14 @@ def main():
     artists_sig, artists_url = make_string(artists, 'artist')
     tracks_sig, tracks_url = make_string(tracks, 'track')
     albums_sig, albums_url = make_string(albums, 'album')
-    albumartists_sig, albumartists_url = make_string(albumartists, 'albumartist')
+    albumartists_sig, albumartists_url = make_string(
+        albumartists, 'albumartist')
     timestamps_sig, timestamps_url = make_string(timestamps, 'timestamp')
 
-    api_sig = md5(bytes('{}{}api_key{}{}methodtrack.scrobblesk{}{}{}{}'.format(
-        albums_sig, albumartists_sig, creds['api_key'], artists_sig, creds['session_key'],
-        timestamps_sig, tracks_sig, creds['secret']), encoding='utf8')
+    api_sig = md5(bytes(''.join([
+        albums_sig, albumartists_sig, "api_key", creds[
+            'api_key'], artists_sig, "methodtrack.scrobblesk", creds['session_key'],
+        timestamps_sig, tracks_sig, creds['secret']]), encoding='utf8')
     ).hexdigest()
 
     # Parameters init and scrobbling
@@ -153,7 +160,8 @@ def main():
     params.update(timestamps_url)
     params.update(tracks_url)
 
-    response = post('https://ws.audioscrobbler.com/2.0/', data=params)
+    response = post('https://ws.audioscrobbler.com/2.0/',
+                    data=params, timeout=30)
     result = response.json()
 
     if 'scrobbles' in result:
@@ -164,8 +172,8 @@ def main():
 
         for scrobble in scrobbles:
             track = tracks_info[str(scrobble['timestamp'])]
-            status = '[{}]'.format('x' if scrobble['ignoredMessage']['code'] == '1' else '✔')
-            print('{} {} - {}'.format(status, track['artist'], track['track']))
+            status = 'x' if scrobble['ignoredMessage']['code'] == '1' else '✔'
+            print(f'[{status}] {track["artist"]} - {track["track"]}')
 
     elif 'error' in result:
         print('Error:', result['message'])

@@ -1,16 +1,18 @@
 #!/usr/bin/python
+"""Last.fm CLI scrobbler implementation based on pylast"""
 
-from yaml import safe_load as yaml_load, dump as yaml_dump
 from glob import glob
 from os.path import exists, isdir, expanduser
-from getpass import getpass
 from time import time
-from pylast import LastFMNetwork, md5
 from optparse import OptionParser
+from getpass import getpass
+from yaml import safe_load as yaml_load, dump as yaml_dump
 from mutagen import File as MutagenFile
+from pylast import LastFMNetwork, md5
 
 
 def main():
+    """CLI entrypoint function"""
 
     # Parsing command-line arguments
     parser = OptionParser(usage="Usage: %prog [FILES]")
@@ -20,7 +22,7 @@ def main():
     credentials_fn = expanduser('~/.lastfm_scrobbler')
 
     if exists(credentials_fn):
-        with open(credentials_fn) as file:
+        with open(credentials_fn, encoding='utf8') as file:
             creds = yaml_load(file) or {}
     else:
         creds = {}
@@ -54,8 +56,9 @@ def main():
             username=username, session_key=session_key,
             password_hash=password_hash
         )
-    except Exception as e:
-        print('[x] Auth unsuccessful:', str(e))
+
+    except Exception as exc:
+        print('[x] Auth unsuccessful:', str(exc))
         exit(1)
 
     creds['api_key'] = api_key
@@ -63,10 +66,10 @@ def main():
     creds['session_key'] = network.session_key
     creds['username'] = username
 
-    with open(credentials_fn, 'wt') as file:
+    with open(credentials_fn, 'wt', encoding='utf8') as file:
         yaml_dump(creds, file)
 
-    print('[v] Auth successful')
+    print('[✔] Auth successful')
 
     items = args if args else glob('*')
     files = filter(lambda x: not isdir(x), items)
@@ -75,20 +78,20 @@ def main():
     timestamp_now = int(time())
 
     for file in files:
-        ft = MutagenFile(file, easy=True)
-        if not ft:
+        filetype = MutagenFile(file, easy=True)
+        if not filetype:
             continue
 
-        artist = ft.get('artist', [None])[0]
-        album_artist = ft.get('albumartist', [None])[0]
-        title = ft.get('title', [None])[0]
-        album = ft.get('album', [None])[0]
+        artist = filetype.get('artist', [None])[0]
+        album_artist = filetype.get('albumartist', [None])[0]
+        title = filetype.get('title', [None])[0]
+        album = filetype.get('album', [None])[0]
 
         if not artist or not title:
             print('[x] Skipping file:', file)
             continue
 
-        duration = int(ft.info.length)
+        duration = int(filetype.info.length)
         cum_length += duration
         timestamp = str(timestamp_now - cum_length)
         tracks.append({
@@ -102,9 +105,9 @@ def main():
 
     try:
         network.scrobble_many(tracks)
-        print('[v] Scrobbling successful')
-    except Exception as e:
-        print('[x] Scrobbling unsuccessful:', str(e))
+        print('[✔] Scrobbling successful')
+    except Exception as exc:
+        print('[x] Scrobbling unsuccessful:', str(exc))
 
 
 if __name__ == '__main__':
